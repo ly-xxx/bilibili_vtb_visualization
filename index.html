@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Vup 粉丝排行 (排版精修版)</title>
+    <style>
+        body { margin: 0; padding: 0; background: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: -apple-system, "SF Pro Display", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif; }
+        
+        .video-container { width: 1920px; height: 1080px; background: #060608; position: relative; overflow: hidden; }
+        #bg-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; mix-blend-mode: screen; opacity: 0.6; }
+
+        .section-boundary { position: absolute; background: rgba(255, 255, 255, 0.08); z-index: 5; }
+        /* 调整分界线，让上下半区分布更加合理均衡 */
+        .boundary-h { top: 590px; left: 0; width: 1920px; height: 1px; }
+        .boundary-v1 { top: 590px; left: 480px; width: 1px; height: 490px; }
+        .boundary-v2 { top: 590px; left: 960px; width: 1px; height: 490px; }
+        .boundary-v3 { top: 590px; left: 1440px; width: 1px; height: 490px; }
+
+        /* 标题锁死在距底部 15px 处 */
+        .block-title { position: absolute; font-size: 18px; font-weight: 500; color: rgba(255, 255, 255, 0.2); z-index: 10; bottom: 12px; width: 440px; text-align: right; letter-spacing: 1px; }
+
+        .header-anchor { position: absolute; top: 200px; right: 50px; display: flex; flex-direction: column; align-items: flex-end; gap: 0; z-index: 100; }
+        
+        .gainer-container { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+        .gainer-tag { color: rgba(255, 255, 255, 0.4); font-size: 18px; font-weight: 600; letter-spacing: 3px; margin-bottom: 5px; }
+        
+        /* ======== Top 1 修复：去除宽度限制，收缩间距 ======== */
+        .gainer-row-main { display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: 100%; margin-bottom: 8px; }
+        .gainer-ava-main { width: 66px; height: 66px; border-radius: 12px; border: 3px solid transparent; box-shadow: 0 6px 20px rgba(0,0,0,0.6); object-fit: cover; transition: opacity 0.15s ease-in-out; }
+        .gainer-name-main { font-size: 40px; font-weight: 600; color: #fff; letter-spacing: 0.5px; text-align: right; white-space: nowrap; transition: opacity 0.15s ease-in-out; } /* 取消了 width 限制，显示完整 */
+        .gainer-inc-main { font-size: 38px; font-weight: 600; font-family: "DIN Alternate", -apple-system, sans-serif; text-shadow: 0 4px 15px rgba(0,0,0,0.4); padding-left: 10px; text-align: right; white-space: nowrap; }
+        
+        /* Top 2-5 保持原有宽度控制 */
+        .gainer-row-sub { display: flex; align-items: center; justify-content: flex-end; gap: 10px; width: 100%; }
+        .gainer-ava-sub { width: 22px; height: 22px; border-radius: 6px; border: 2px solid transparent; box-shadow: 0 2px 8px rgba(0,0,0,0.6); object-fit: cover; transition: opacity 0.15s ease-in-out; }
+        .gainer-name-sub { font-size: 18px; font-weight: 500; color: rgba(255,255,255,0.85); letter-spacing: 0.5px; width: 180px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: opacity 0.15s ease-in-out; }
+        .gainer-inc-sub { font-size: 18px; font-weight: 600; font-family: "DIN Alternate", -apple-system, sans-serif; width: 100px; text-align: right; white-space: nowrap; }
+
+        .text-gradient-up { background: linear-gradient(135deg, #ff7a45, #ff4d4f); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .text-gradient-down { background: linear-gradient(135deg, #73d13d, #52c41a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .date-row { display: flex; align-items: baseline; justify-content: flex-end; gap: 30px; margin-top: 25px; width: 100%; }
+        .top30-label { font-size: 38px; font-weight: 600; color: rgba(255, 255, 255, 0.15); letter-spacing: 1px; }
+        .global-date { font-size: 110px; font-weight: 700; color: rgba(255, 255, 255, 0.18); font-family: "DIN Alternate", -apple-system, sans-serif; line-height: 0.85; }
+
+        #bars-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; }
+        
+        .vup-item { position: absolute; top: 0; left: 0; width: 100%; will-change: transform, opacity; }
+        .avatar { position: absolute; left: 0; top: 0; border-radius: 4px; object-fit: cover; }
+        .name { position: absolute; top: 0; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; letter-spacing: 0.5px; }
+        
+        .bar { position: absolute; top: 1px; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); }
+        
+        .speed-wave { 
+            position: absolute; top: 0; left: -20px; width: calc(100% + 40px); height: 100%; 
+            background: repeating-linear-gradient(90deg,
+                transparent 0px, transparent 130px,
+                rgba(255, 255, 255, 0.15) 180px, rgba(255, 255, 255, 0.7) 230px, rgba(255, 255, 255, 0.15) 280px,
+                transparent 330px
+            );
+            background-size: 330px 100%; 
+            transform: skewX(-20deg); opacity: 0; mix-blend-mode: overlay;
+            animation: premiumSweep linear infinite; 
+        }
+        @keyframes premiumSweep { 0% { background-position: 0 0; } 100% { background-position: 330px 0; } }
+
+        .value-node, .inc-node { position: absolute; top: 0; font-weight: 600; font-family: "DIN Alternate", -apple-system, sans-serif; white-space: nowrap; }
+        .value-node { color: #fff; }
+
+        .vup-item.top-rank { height: 18px; }
+        .vup-item.top-rank .avatar { width: 16px; height: 16px; }
+        .vup-item.top-rank .name { left: 24px; font-size: 13px; line-height: 18px; width: 120px; }
+        .vup-item.top-rank .bar { left: 145px; height: 14px; }
+        .vup-item.top-rank .value-node { font-size: 14px; line-height: 18px; }
+        .vup-item.top-rank .inc-node { font-size: 13px; line-height: 18px; }
+
+        .vup-item.bottom-rank { height: 14px; }
+        .vup-item.bottom-rank .avatar { width: 12px; height: 12px; }
+        .vup-item.bottom-rank .name { left: 18px; font-size: 11px; line-height: 14px; width: 100px;}
+        .vup-item.bottom-rank .bar { left: 120px; height: 11px; }
+        .vup-item.bottom-rank .value-node { font-size: 12px; line-height: 14px; }
+        .vup-item.bottom-rank .inc-node { font-size: 11px; line-height: 14px; }
+
+        .overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0b0b0f; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; color: #fff; }
+        .btn { background: #fff; color: #000; padding: 12px 30px; font-size: 16px; font-weight: 600; border-radius: 4px; cursor: pointer; position: relative; }
+        .btn input { position: absolute; top: 0; left: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+
+<div id="startup-overlay" class="overlay">
+    <div class="btn">载入白名单过滤后的 baked_data.csv <input type="file" id="csv-file" accept=".csv" /></div>
+</div>
+
+<div class="video-container">
+    <canvas id="bg-canvas"></canvas>
+    <div class="section-boundary boundary-h"></div>
+    <div class="section-boundary boundary-v1"></div>
+    <div class="section-boundary boundary-v2"></div>
+    <div class="section-boundary boundary-v3"></div>
+
+    <div class="header-anchor">
+        <div class="gainer-container">
+            <span class="gainer-tag">TOP 5 GAINERS</span>
+            <div id="gainer-0" class="gainer-row-main">
+                <img class="gainer-ava-main" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+                <div class="gainer-name-main">---</div>
+                <div class="gainer-inc-main text-gradient-up">▲ 0</div>
+            </div>
+            <div id="gainer-1" class="gainer-row-sub">
+                <img class="gainer-ava-sub" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+                <div class="gainer-name-sub">---</div>
+                <div class="gainer-inc-sub text-gradient-up">▲ 0</div>
+            </div>
+            <div id="gainer-2" class="gainer-row-sub">
+                <img class="gainer-ava-sub" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+                <div class="gainer-name-sub">---</div>
+                <div class="gainer-inc-sub text-gradient-up">▲ 0</div>
+            </div>
+            <div id="gainer-3" class="gainer-row-sub">
+                <img class="gainer-ava-sub" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+                <div class="gainer-name-sub">---</div>
+                <div class="gainer-inc-sub text-gradient-up">▲ 0</div>
+            </div>
+            <div id="gainer-4" class="gainer-row-sub">
+                <img class="gainer-ava-sub" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+                <div class="gainer-name-sub">---</div>
+                <div class="gainer-inc-sub text-gradient-up">▲ 0</div>
+            </div>
+        </div>
+        
+        <div class="date-row">
+            <span class="top30-label">TOP 30</span>
+            <span class="global-date" id="date-label">---- -- --</span>
+        </div>
+    </div>
+
+    <div class="block-title" style="left: 0;">TOP 31-60</div>
+    <div class="block-title" style="left: 480px;">TOP 61-90</div>
+    <div class="block-title" style="left: 960px;">TOP 91-120</div>
+    <div class="block-title" style="left: 1440px;">TOP 121-150</div>
+    
+    <div id="bars-container"></div>
+</div>
+
+<script>
+    let dates = [], allVupNames = [], vupTimelines = {}, vupNodes = {}, sectionMaxValues = [1,1,1,1,1];
+    let isPlaying = false, logicalElapsedMs = 0, lastAnimTime = 0;
+    
+    let currentTop5Names = ["", "", "", "", ""];
+    const msPerDay = 2200; 
+
+    // 重新规划区块高度边界
+    const SEC_BOUNDS = [
+        { x: 30, top: 40, bottom: 570 },     
+        { x: 30, top: 610, bottom: 1060 }, 
+        { x: 510, top: 610, bottom: 1060 },
+        { x: 990, top: 610, bottom: 1060 },
+        { x: 1470, top: 610, bottom: 1060 }
+    ];
+
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 1920; canvas.height = 1080;
+    let particles = [];
+    let globalMarketHeat = 0; 
+    
+    for(let i=0; i<60; i++) particles.push({ x: Math.random()*1920, y: Math.random()*1080, vx: (Math.random()-0.5)*0.5, vy: -(Math.random()*1+0.2), life: Math.random() });
+
+    window.addEventListener('keydown', (e) => {
+        if (!dates.length) return;
+        if (e.code === 'Space') isPlaying = !isPlaying;
+        if (e.code === 'ArrowRight') logicalElapsedMs += 30 * msPerDay;
+        if (e.code === 'ArrowLeft') logicalElapsedMs = Math.max(0, logicalElapsedMs - 30 * msPerDay);
+    });
+
+    document.getElementById('csv-file').addEventListener('change', function(e) {
+        const file = e.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('startup-overlay').style.display = 'none';
+            parseCSV(e.target.result);
+            initDOM();
+            isPlaying = true;
+            requestAnimationFrame(animLoop);
+        };
+        reader.readAsText(file);
+    });
+
+    function parseCSV(text) {
+        const lines = text.split(/\r?\n/);
+        for (let i = 1; i < lines.length; i++) {
+            let line = lines[i].trim(); if (!line) continue;
+            let parts = line.split(','); 
+            if (parts.length < 5) continue;
+            let [d, n, v, inc, col] = parts;
+            if (!v) continue;
+            if (!dates.includes(d)) dates.push(d);
+            if (!vupTimelines[n]) { 
+                vupTimelines[n] = { values: {}, incs: {}, color: col || '#666' }; 
+                allVupNames.push(n); 
+            }
+            vupTimelines[n].values[d] = parseInt(v);
+            vupTimelines[n].incs[d] = parseInt(inc);
+        }
+        dates.sort();
+    }
+
+    function initDOM() {
+        const container = document.getElementById('bars-container');
+        allVupNames.forEach(name => {
+            let node = document.createElement('div'); node.className = 'vup-item top-rank';
+            let col = vupTimelines[name].color;
+            node.innerHTML = `<img class="avatar" src="./avatars/${name}.jpg" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';">
+                             <div class="name">${name}</div>
+                             <div class="bar" style="background-color: ${col}"><div class="speed-wave"></div></div>
+                             <div class="value-node"></div><div class="inc-node"></div>`;
+            container.appendChild(node);
+            vupNodes[name] = { 
+                node, bar: node.querySelector('.bar'), wave: node.querySelector('.speed-wave'), 
+                valDiv: node.querySelector('.value-node'), incDiv: node.querySelector('.inc-node'),
+                x: -500, y: 1200, barW: 0, opacity: 0, color: col, section: -1, animState: 'NORMAL' 
+            };
+        });
+    }
+
+    function animLoop(time) {
+        if (!lastAnimTime) lastAnimTime = time;
+        let delta = time - lastAnimTime; lastAnimTime = time;
+        if (isPlaying) logicalElapsedMs += delta;
+        renderFrame(logicalElapsedMs);
+        requestAnimationFrame(animLoop);
+    }
+
+    function renderFrame(elapsed) {
+        if (!dates.length) return;
+        let dayF = elapsed / msPerDay;
+        let dIdx = Math.floor(dayF);
+        let p = dayF - dIdx;
+        
+        if (dIdx >= dates.length - 1) { 
+            dIdx = dates.length - 1; 
+            p = 0; 
+            if (isPlaying) isPlaying = false; 
+        }
+        
+        let d = dates[dIdx];
+        // 保证 dNext 哪怕在最后一天也不会越界报错
+        let dNext = dates[Math.min(dIdx + 1, dates.length - 1)];
+        document.getElementById('date-label').textContent = d;
+
+        let currentFrame = allVupNames.map(name => {
+            let tl = vupTimelines[name];
+            let v = (tl.values[d] || 0) + ((tl.values[dNext] || tl.values[d] || 0) - (tl.values[d] || 0)) * p;
+            let inc = (tl.incs[d] || 0) + ((tl.incs[dNext] || tl.incs[d] || 0) - (tl.incs[d] || 0)) * p;
+            return { name, value: v, inc: inc };
+        }).sort((a,b) => b.value - a.value);
+
+        sectionMaxValues = [
+            currentFrame[0]?.value || 1, currentFrame[30]?.value || 1, 
+            currentFrame[60]?.value || 1, currentFrame[90]?.value || 1, 
+            currentFrame[120]?.value || 1
+        ];
+
+        let top150 = currentFrame.slice(0, 150);
+        let top5Gainers = [...top150].sort((a, b) => b.inc - a.inc).slice(0, 5);
+        updateTop5Gainers(top5Gainers);
+
+        let totalInc = top150.reduce((sum, curr) => sum + Math.max(0, curr.inc), 0);
+        globalMarketHeat += (Math.min(1, totalInc / 80000) - globalMarketHeat) * 0.1;
+        ctx.clearRect(0, 0, 1920, 1080);
+        particles.forEach(pt => {
+            pt.y += pt.vy * (1 + globalMarketHeat * 3);
+            pt.life -= 0.005;
+            if (pt.life <= 0 || pt.y < 0) { pt.y = 1080; pt.life = Math.random() * 0.5 + 0.1; pt.x = Math.random()*1920; }
+            ctx.fillStyle = `rgba(255,255,255,${pt.life * globalMarketHeat * 0.3})`;
+            ctx.beginPath(); ctx.arc(pt.x, pt.y, 1.5, 0, Math.PI * 2); ctx.fill();
+        });
+
+        currentFrame.forEach((data, rank) => {
+            let vup = vupNodes[data.name], tx, ty, tMaxW, tSec;
+            let isTopRank = rank < 30;
+
+            if (isTopRank) { 
+                tx = SEC_BOUNDS[0].x; ty = 40 + rank * 17.5; tMaxW = 1250; tSec = 0; 
+                vup.node.classList.add('top-rank'); vup.node.classList.remove('bottom-rank');
+            } else if (rank < 150) {
+                let b = Math.floor((rank - 30) / 30); let lr = (rank - 30) % 30;
+                tSec = b + 1; tx = SEC_BOUNDS[tSec].x; ty = 610 + lr * 14.5; tMaxW = 200; 
+                vup.node.classList.add('bottom-rank'); vup.node.classList.remove('top-rank');
+            } else { 
+                tx = vup.x; ty = 1200; tMaxW = 0; tSec = 99; 
+            }
+
+            if (vup.section === -1) { 
+                vup.x = tx; vup.y = ty; vup.section = tSec; vup.opacity = (tSec < 5 ? 1 : 0); 
+            } else if (vup.section !== tSec && vup.animState === 'NORMAL') { 
+                vup.animState = 'LEAVING'; 
+                vup.targetSec = tSec; 
+                vup.leaveUp = tSec < vup.section; 
+                vup.leaveEdge = vup.leaveUp ? SEC_BOUNDS[vup.section<5?vup.section:0].top : SEC_BOUNDS[vup.section<5?vup.section:0].bottom;
+            }
+
+            if (vup.animState === 'LEAVING') {
+                vup.y += (vup.leaveEdge - vup.y) * 0.6; 
+                vup.opacity -= 0.35;
+                if (vup.opacity <= 0) {
+                    vup.section = vup.targetSec; vup.animState = 'ENTERING'; vup.x = tx; 
+                    vup.y = vup.leaveUp ? SEC_BOUNDS[vup.section<5?vup.section:0].bottom : SEC_BOUNDS[vup.section<5?vup.section:0].top;
+                }
+            } else if (vup.animState === 'ENTERING') { 
+                vup.y += (ty - vup.y) * 0.6; 
+                vup.opacity += 0.35; 
+                if (vup.opacity >= 1) vup.animState = 'NORMAL'; 
+            } else {
+                vup.x += (tx - vup.x) * 0.3; 
+                vup.y += (ty - vup.y) * 0.3; 
+                vup.opacity += ((tSec < 5 ? 1 : 0) - vup.opacity) * 0.3; 
+            }
+
+            let ratio = data.value / (sectionMaxValues[tSec < 5 ? tSec : 4] || 1);
+            let barW = Math.pow(ratio, 0.65) * tMaxW; 
+            vup.barW += (barW - vup.barW) * 0.4;
+
+            let sat = 100, bright = 1, textGray = 0, textSat = 100;
+            let absInc = Math.abs(data.inc);
+            
+            if (absInc < 300) {
+                textGray = 100 - (absInc / 300) * 100;
+            } else {
+                textSat = 100 + Math.min(200, ((absInc - 300) / 5000) * 200);
+            }
+            vup.incDiv.style.filter = `grayscale(${textGray}%) saturate(${textSat}%)`;
+            
+            if (absInc > 500) {
+                let heatRatio = Math.min(1, absInc / 6000); 
+                sat = 100 + heatRatio * 180; 
+                bright = 1 + heatRatio * 0.4; 
+            }
+            if (data.inc < 0) { 
+                sat = Math.max(0, 100 - (absInc/1000)*50); bright = 0.8; 
+            }
+            
+            // 降低塔菲的饱和度加成
+            if (data.name === '阿萨Aza') {
+                sat = Math.max(sat, 150) * 1.5; 
+                bright = Math.max(bright, 1.1) * 1.1; 
+            } else if (data.name === '永雏塔菲') {
+                sat = Math.max(sat, 110) * 1.1; // 削弱了塔菲的专属过曝感
+                bright = Math.max(bright, 1.0) * 1.05; 
+            }
+            vup.bar.style.filter = `saturate(${sat}%) brightness(${bright})`;
+
+            if (data.inc > 800) {
+                let intensity = Math.min(1, (data.inc - 800) / 8000);
+                vup.bar.style.boxShadow = `0 0 ${4 + intensity * 18}px rgba(255,255,255,${intensity * 0.85})`;
+                vup.wave.style.opacity = Math.max(0.2, intensity); 
+                vup.wave.style.animationDuration = `${3.5 - intensity * 2}s`; 
+            } else {
+                vup.bar.style.boxShadow = '0 2px 5px rgba(0,0,0,0.4)';
+                vup.wave.style.opacity = 0;
+            }
+
+            vup.node.style.transform = `translate(${vup.x}px, ${vup.y}px)`;
+            vup.node.style.opacity = vup.opacity;
+            vup.node.style.zIndex = rank < 150 ? 200 - rank : 0;
+            vup.bar.style.width = `${vup.barW}px`;
+
+            let startX = isTopRank ? 145 : 120; 
+            let valOffsetX = isTopRank ? 15 : 8;
+            let incOffsetX = isTopRank ? 110 : 75;
+            vup.valDiv.style.transform = `translateX(${startX + vup.barW + valOffsetX}px)`;
+            vup.valDiv.textContent = Math.floor(data.value).toLocaleString();
+            
+            vup.incDiv.style.transform = `translateX(${startX + vup.barW + incOffsetX}px)`;
+            vup.incDiv.textContent = (data.inc >= 0 ? '▲ ' : '▼ ') + Math.floor(absInc).toLocaleString();
+            vup.incDiv.className = data.inc >= 0 ? 'inc-node text-gradient-up' : 'inc-node text-gradient-down';
+        });
+    }
+
+    function updateTop5Gainers(top5) {
+        if (!top5 || top5.length === 0) return;
+        
+        top5.forEach((gainer, idx) => {
+            const row = document.getElementById(`gainer-${idx}`);
+            if (!row) return;
+            
+            const isMain = idx === 0;
+            const incClassBase = isMain ? 'gainer-inc-main' : 'gainer-inc-sub';
+            const incEl = row.querySelector(`.${incClassBase}`);
+            let absInc = Math.abs(gainer.inc);
+            
+            incEl.textContent = (gainer.inc >= 0 ? '▲ ' : '▼ ') + Math.floor(absInc).toLocaleString();
+            incEl.className = `${incClassBase} ` + (gainer.inc >= 0 ? 'text-gradient-up' : 'text-gradient-down');
+            
+            let textGray = 0, textSat = 100;
+            if (absInc < 300) {
+                textGray = 100 - (absInc / 300) * 100;
+            } else {
+                textSat = 100 + Math.min(200, ((absInc - 300) / 5000) * 200); 
+            }
+            incEl.style.filter = `grayscale(${textGray}%) saturate(${textSat}%)`;
+
+            if (currentTop5Names[idx] !== gainer.name) {
+                currentTop5Names[idx] = gainer.name;
+                
+                const ava = row.querySelector(isMain ? '.gainer-ava-main' : '.gainer-ava-sub');
+                const nameEl = row.querySelector(isMain ? '.gainer-name-main' : '.gainer-name-sub');
+                
+                ava.style.opacity = 0;
+                nameEl.style.opacity = 0;
+                
+                setTimeout(() => {
+                    ava.src = `./avatars/${gainer.name}.jpg`;
+                    nameEl.textContent = gainer.name;
+                    ava.style.borderColor = vupTimelines[gainer.name] ? vupTimelines[gainer.name].color : '#fff';
+                    ava.style.opacity = 1;
+                    nameEl.style.opacity = 1;
+                }, 150);
+            }
+        });
+    }
+</script>
+</body>
+</html>
