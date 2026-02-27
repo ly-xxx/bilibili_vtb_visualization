@@ -5,7 +5,6 @@
 ## 项目结构
 
 ```
-taffy_aza/
 ├── package.json          # 项目配置
 ├── crawler.js            # 数据爬取脚本
 ├── index.html            # 前端可视化页面

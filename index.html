@@ -10,13 +10,11 @@
         #bg-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; mix-blend-mode: screen; opacity: 0.6; }
 
         .section-boundary { position: absolute; background: rgba(255, 255, 255, 0.08); z-index: 5; }
-        /* 调整分界线，让上下半区分布更加合理均衡 */
         .boundary-h { top: 590px; left: 0; width: 1920px; height: 1px; }
         .boundary-v1 { top: 590px; left: 480px; width: 1px; height: 490px; }
         .boundary-v2 { top: 590px; left: 960px; width: 1px; height: 490px; }
         .boundary-v3 { top: 590px; left: 1440px; width: 1px; height: 490px; }
 
-        /* 标题锁死在距底部 15px 处 */
         .block-title { position: absolute; font-size: 18px; font-weight: 500; color: rgba(255, 255, 255, 0.2); z-index: 10; bottom: 12px; width: 440px; text-align: right; letter-spacing: 1px; }
 
         .header-anchor { position: absolute; top: 200px; right: 50px; display: flex; flex-direction: column; align-items: flex-end; gap: 0; z-index: 100; }
@@ -24,13 +22,11 @@
         .gainer-container { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
         .gainer-tag { color: rgba(255, 255, 255, 0.4); font-size: 18px; font-weight: 600; letter-spacing: 3px; margin-bottom: 5px; }
         
-        /* ======== Top 1 修复：去除宽度限制，收缩间距 ======== */
         .gainer-row-main { display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: 100%; margin-bottom: 8px; }
         .gainer-ava-main { width: 66px; height: 66px; border-radius: 12px; border: 3px solid transparent; box-shadow: 0 6px 20px rgba(0,0,0,0.6); object-fit: cover; transition: opacity 0.15s ease-in-out; }
-        .gainer-name-main { font-size: 40px; font-weight: 600; color: #fff; letter-spacing: 0.5px; text-align: right; white-space: nowrap; transition: opacity 0.15s ease-in-out; } /* 取消了 width 限制，显示完整 */
+        .gainer-name-main { font-size: 40px; font-weight: 600; color: #fff; letter-spacing: 0.5px; text-align: right; white-space: nowrap; transition: opacity 0.15s ease-in-out; }
         .gainer-inc-main { font-size: 38px; font-weight: 600; font-family: "DIN Alternate", -apple-system, sans-serif; text-shadow: 0 4px 15px rgba(0,0,0,0.4); padding-left: 10px; text-align: right; white-space: nowrap; }
         
-        /* Top 2-5 保持原有宽度控制 */
         .gainer-row-sub { display: flex; align-items: center; justify-content: flex-end; gap: 10px; width: 100%; }
         .gainer-ava-sub { width: 22px; height: 22px; border-radius: 6px; border: 2px solid transparent; box-shadow: 0 2px 8px rgba(0,0,0,0.6); object-fit: cover; transition: opacity 0.15s ease-in-out; }
         .gainer-name-sub { font-size: 18px; font-weight: 500; color: rgba(255,255,255,0.85); letter-spacing: 0.5px; width: 180px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: opacity 0.15s ease-in-out; }
@@ -49,22 +45,44 @@
         .avatar { position: absolute; left: 0; top: 0; border-radius: 4px; object-fit: cover; }
         .name { position: absolute; top: 0; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; letter-spacing: 0.5px; }
         
-        .bar { position: absolute; top: 1px; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); }
+        .bar { 
+            position: absolute; top: 1px; border-radius: 4px; overflow: hidden; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); 
+            transform: translateZ(0); /* 强制 GPU 层 */
+            will-change: width, filter, box-shadow;
+        }
         
         .speed-wave { 
-            position: absolute; top: 0; left: -20px; width: calc(100% + 40px); height: 100%; 
+            /* 【核心修改 1】往左藏起一个周期（330px），方便后续整体往右推 */
+            position: absolute; top: 0; left: -330px; 
+            width: calc(100% + 330px); height: 100%; 
             background: repeating-linear-gradient(90deg,
                 transparent 0px, transparent 130px,
                 rgba(255, 255, 255, 0.15) 180px, rgba(255, 255, 255, 0.7) 230px, rgba(255, 255, 255, 0.15) 280px,
                 transparent 330px
             );
             background-size: 330px 100%; 
-            transform: skewX(-20deg); opacity: 0; mix-blend-mode: overlay;
-            animation: premiumSweep linear infinite; 
+            transform: translate3d(0,0,0) skewX(-20deg); 
+            opacity: 0; 
+            will-change: transform, opacity;
         }
-        @keyframes premiumSweep { 0% { background-position: 0 0; } 100% { background-position: 330px 0; } }
+        
+        .damage-flash {
+            position: absolute; inset: 0;
+            background: linear-gradient(90deg, rgba(80, 8, 12, 0.15), rgba(190, 24, 40, 0.45), rgba(80, 8, 12, 0.15));
+            mix-blend-mode: screen;
+            opacity: 0;
+            pointer-events: none;
+            animation: damageFlicker 0.32s steps(2, end) infinite;
+            animation-play-state: paused;
+            will-change: opacity;
+        }
+        @keyframes damageFlicker {
+            0%, 100% { opacity: 0.18; }
+            50% { opacity: 0.7; }
+        }
 
-        .value-node, .inc-node { position: absolute; top: 0; font-weight: 600; font-family: "DIN Alternate", -apple-system, sans-serif; white-space: nowrap; }
+        .value-node, .inc-node { position: absolute; top: 0; font-weight: 600; font-family: "DIN Alternate", -apple-system, sans-serif; white-space: nowrap; will-change: transform; }
         .value-node { color: #fff; }
 
         .vup-item.top-rank { height: 18px; }
@@ -149,8 +167,8 @@
     
     let currentTop5Names = ["", "", "", "", ""];
     const msPerDay = 2200; 
+    const WAVE_TILE = 330;
 
-    // 重新规划区块高度边界
     const SEC_BOUNDS = [
         { x: 30, top: 40, bottom: 570 },     
         { x: 30, top: 610, bottom: 1060 }, 
@@ -213,56 +231,76 @@
             let col = vupTimelines[name].color;
             node.innerHTML = `<img class="avatar" src="./avatars/${name}.jpg" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';">
                              <div class="name">${name}</div>
-                             <div class="bar" style="background-color: ${col}"><div class="speed-wave"></div></div>
+                             <div class="bar" style="background-color: ${col}"><div class="damage-flash"></div><div class="speed-wave"></div></div>
                              <div class="value-node"></div><div class="inc-node"></div>`;
             container.appendChild(node);
+            
+            // 缓存层：加入极其细致的状态记录，避免重复操作 DOM
             vupNodes[name] = { 
-                node, bar: node.querySelector('.bar'), wave: node.querySelector('.speed-wave'), 
+                node, bar: node.querySelector('.bar'), wave: node.querySelector('.speed-wave'), damage: node.querySelector('.damage-flash'),
                 valDiv: node.querySelector('.value-node'), incDiv: node.querySelector('.inc-node'),
-                x: -500, y: 1200, barW: 0, opacity: 0, color: col, section: -1, animState: 'NORMAL' 
+                x: -500, y: 1200, barW: 0, opacity: 0, color: col, section: -1, animState: 'NORMAL',
+                visInc: 0, waveMode: 'none', wavePhase: Math.random() * WAVE_TILE, waveSpeed: 0, waveTargetSpeed: 0,
+                // DOM State Caches
+                lastNodeTransform: '', lastBarW: -1, lastValTransform: '', lastIncTransform: '', lastWaveTransform: '',
+                lastValText: '', lastIncText: '', lastIncClass: '', lastIncFilter: '',
+                lastBarFilter: '', lastBoxShadow: '', lastBorderColor: '', lastWaveOpacity: -1
             };
         });
     }
 
     function animLoop(time) {
         if (!lastAnimTime) lastAnimTime = time;
-        let delta = time - lastAnimTime; lastAnimTime = time;
+        let delta = Math.min(40, time - lastAnimTime); lastAnimTime = time;
         if (isPlaying) logicalElapsedMs += delta;
-        renderFrame(logicalElapsedMs);
+        renderFrame(logicalElapsedMs, delta);
         requestAnimationFrame(animLoop);
     }
 
-    function renderFrame(elapsed) {
+    function renderFrame(elapsed, deltaMs = 16) {
         if (!dates.length) return;
         let dayF = elapsed / msPerDay;
         let dIdx = Math.floor(dayF);
         let p = dayF - dIdx;
+        let pSmooth = p * p * (3 - 2 * p);
+        const fastLerp = 1 - Math.exp(-deltaMs / 110);
+        const normalLerp = 1 - Math.exp(-deltaMs / 170);
+        const slowLerp = 1 - Math.exp(-deltaMs / 240);
+        const waveSpeedLerp = 1 - Math.exp(-deltaMs / 140);
         
         if (dIdx >= dates.length - 1) { 
             dIdx = dates.length - 1; 
-            p = 0; 
+            p = 0; pSmooth = 0;
             if (isPlaying) isPlaying = false; 
         }
         
         let d = dates[dIdx];
-        // 保证 dNext 哪怕在最后一天也不会越界报错
         let dNext = dates[Math.min(dIdx + 1, dates.length - 1)];
+        let dAfter = dates[Math.min(dIdx + 2, dates.length - 1)];
         document.getElementById('date-label').textContent = d;
 
         let currentFrame = allVupNames.map(name => {
             let tl = vupTimelines[name];
-            let v = (tl.values[d] || 0) + ((tl.values[dNext] || tl.values[d] || 0) - (tl.values[d] || 0)) * p;
-            let inc = (tl.incs[d] || 0) + ((tl.incs[dNext] || tl.incs[d] || 0) - (tl.incs[d] || 0)) * p;
+            let vToday = tl.values[d] || 0;
+            let vNextDay = tl.values[dNext] || vToday;
+            let vAfterNextDay = tl.values[dAfter] || vNextDay;
+            let v = vToday + (vNextDay - vToday) * pSmooth;
+            
+            let slopeNow = vNextDay - vToday;
+            let slopeNext = vAfterNextDay - vNextDay;
+            let inc = slopeNow + (slopeNext - slopeNow) * pSmooth;
             return { name, value: v, inc: inc };
         }).sort((a,b) => b.value - a.value);
 
+        const nonZeroFrame = currentFrame.filter(item => item.value > 0);
+        const nonZeroRankMap = new Map(nonZeroFrame.map((item, idx) => [item.name, idx]));
         sectionMaxValues = [
-            currentFrame[0]?.value || 1, currentFrame[30]?.value || 1, 
-            currentFrame[60]?.value || 1, currentFrame[90]?.value || 1, 
-            currentFrame[120]?.value || 1
+            nonZeroFrame[0]?.value || 1, nonZeroFrame[30]?.value || 1, 
+            nonZeroFrame[60]?.value || 1, nonZeroFrame[90]?.value || 1, 
+            nonZeroFrame[120]?.value || 1
         ];
 
-        let top150 = currentFrame.slice(0, 150);
+        let top150 = nonZeroFrame.slice(0, 150);
         let top5Gainers = [...top150].sort((a, b) => b.inc - a.inc).slice(0, 5);
         updateTop5Gainers(top5Gainers);
 
@@ -279,13 +317,27 @@
 
         currentFrame.forEach((data, rank) => {
             let vup = vupNodes[data.name], tx, ty, tMaxW, tSec;
-            let isTopRank = rank < 30;
+            if (data.value <= 0) {
+                vup.opacity += (0 - vup.opacity) * normalLerp;
+                vup.y += (1200 - vup.y) * normalLerp;
+                const nodeTransform = `translate3d(${Math.round(vup.x)}px, ${Math.round(vup.y)}px, 0)`;
+                if (vup.lastNodeTransform !== nodeTransform) {
+                    vup.node.style.transform = nodeTransform;
+                    vup.lastNodeTransform = nodeTransform;
+                }
+                vup.node.style.opacity = vup.opacity;
+                vup.node.style.zIndex = 0;
+                return;
+            }
+            
+            let nzRank = nonZeroRankMap.get(data.name);
+            let isTopRank = nzRank < 30;
 
             if (isTopRank) { 
-                tx = SEC_BOUNDS[0].x; ty = 40 + rank * 17.5; tMaxW = 1250; tSec = 0; 
+                tx = SEC_BOUNDS[0].x; ty = 40 + nzRank * 17.5; tMaxW = 1250; tSec = 0; 
                 vup.node.classList.add('top-rank'); vup.node.classList.remove('bottom-rank');
-            } else if (rank < 150) {
-                let b = Math.floor((rank - 30) / 30); let lr = (rank - 30) % 30;
+            } else if (nzRank < 150) {
+                let b = Math.floor((nzRank - 30) / 30); let lr = (nzRank - 30) % 30;
                 tSec = b + 1; tx = SEC_BOUNDS[tSec].x; ty = 610 + lr * 14.5; tMaxW = 200; 
                 vup.node.classList.add('bottom-rank'); vup.node.classList.remove('top-rank');
             } else { 
@@ -302,79 +354,208 @@
             }
 
             if (vup.animState === 'LEAVING') {
-                vup.y += (vup.leaveEdge - vup.y) * 0.6; 
-                vup.opacity -= 0.35;
+                vup.y += (vup.leaveEdge - vup.y) * fastLerp; 
+                vup.opacity -= normalLerp;
                 if (vup.opacity <= 0) {
                     vup.section = vup.targetSec; vup.animState = 'ENTERING'; vup.x = tx; 
                     vup.y = vup.leaveUp ? SEC_BOUNDS[vup.section<5?vup.section:0].bottom : SEC_BOUNDS[vup.section<5?vup.section:0].top;
                 }
             } else if (vup.animState === 'ENTERING') { 
-                vup.y += (ty - vup.y) * 0.6; 
-                vup.opacity += 0.35; 
+                vup.y += (ty - vup.y) * fastLerp; 
+                vup.opacity += normalLerp; 
                 if (vup.opacity >= 1) vup.animState = 'NORMAL'; 
             } else {
-                vup.x += (tx - vup.x) * 0.3; 
-                vup.y += (ty - vup.y) * 0.3; 
-                vup.opacity += ((tSec < 5 ? 1 : 0) - vup.opacity) * 0.3; 
+                vup.x += (tx - vup.x) * normalLerp; 
+                vup.y += (ty - vup.y) * normalLerp; 
+                vup.opacity += ((tSec < 5 ? 1 : 0) - vup.opacity) * normalLerp; 
             }
 
             let ratio = data.value / (sectionMaxValues[tSec < 5 ? tSec : 4] || 1);
             let barW = Math.pow(ratio, 0.65) * tMaxW; 
-            vup.barW += (barW - vup.barW) * 0.4;
+            vup.barW += (barW - vup.barW) * normalLerp;
 
-            let sat = 100, bright = 1, textGray = 0, textSat = 100;
-            let absInc = Math.abs(data.inc);
+            if (!Number.isFinite(vup.visInc)) vup.visInc = Math.abs(data.inc);
+            vup.visInc += (Math.abs(data.inc) - vup.visInc) * slowLerp;
+            
+            let visInc = vup.visInc;
+            // 【核心修改 2】明确区分“真涨粉”和“真掉粉”，过滤小幅震荡
+            let isGaining = data.inc > 1; 
+            let isLosing = data.inc < -1;
+            
+            let sat = 120, bright = 1, textGray = 0, textSat = 100;
+            let absInc = visInc;
             
             if (absInc < 300) {
                 textGray = 100 - (absInc / 300) * 100;
             } else {
                 textSat = 100 + Math.min(200, ((absInc - 300) / 5000) * 200);
             }
-            vup.incDiv.style.filter = `grayscale(${textGray}%) saturate(${textSat}%)`;
+            // 文本滤镜取整缓存
+            textGray = Math.round(textGray / 5) * 5;
+            textSat = Math.round(textSat / 10) * 10;
+            const incFilter = `grayscale(${textGray}%) saturate(${textSat}%)`;
+            if (vup.lastIncFilter !== incFilter) {
+                vup.incDiv.style.filter = incFilter;
+                vup.lastIncFilter = incFilter;
+            }
             
             if (absInc > 500) {
                 let heatRatio = Math.min(1, absInc / 6000); 
                 sat = 100 + heatRatio * 180; 
                 bright = 1 + heatRatio * 0.4; 
             }
-            if (data.inc < 0) { 
+            if (isLosing) { 
                 sat = Math.max(0, 100 - (absInc/1000)*50); bright = 0.8; 
             }
             
-            // 降低塔菲的饱和度加成
             if (data.name === '阿萨Aza') {
-                sat = Math.max(sat, 150) * 1.5; 
-                bright = Math.max(bright, 1.1) * 1.1; 
+                sat = Math.max(sat, 150) * 1.5; bright = Math.max(bright, 1.1) * 1.1; 
             } else if (data.name === '永雏塔菲') {
-                sat = Math.max(sat, 110) * 1.1; // 削弱了塔菲的专属过曝感
-                bright = Math.max(bright, 1.0) * 1.05; 
+                sat = Math.max(sat, 110) * 1.1; bright = Math.max(bright, 1.0) * 1.05; 
             }
-            vup.bar.style.filter = `saturate(${sat}%) brightness(${bright})`;
-
-            if (data.inc > 800) {
-                let intensity = Math.min(1, (data.inc - 800) / 8000);
-                vup.bar.style.boxShadow = `0 0 ${4 + intensity * 18}px rgba(255,255,255,${intensity * 0.85})`;
-                vup.wave.style.opacity = Math.max(0.2, intensity); 
-                vup.wave.style.animationDuration = `${3.5 - intensity * 2}s`; 
-            } else {
-                vup.bar.style.boxShadow = '0 2px 5px rgba(0,0,0,0.4)';
-                vup.wave.style.opacity = 0;
+            
+            // 进度条滤镜取整缓存
+            let boostedSat = Math.min(360, sat * 1.15);
+            let snapSat = Math.round(boostedSat / 10) * 10;
+            let snapBright = Math.round(bright * 10) / 10;
+            const barFilter = `saturate(${snapSat}%) brightness(${snapBright})`;
+            if (vup.lastBarFilter !== barFilter) {
+                vup.bar.style.filter = barFilter;
+                vup.lastBarFilter = barFilter;
             }
 
-            vup.node.style.transform = `translate(${vup.x}px, ${vup.y}px)`;
+            // 【核心修改 3】只有真涨粉且达到阈值，才激活波浪
+            if (isGaining && visInc > 100) {
+                let intensity = Math.min(1, (visInc - 100) / 4500);
+                const boxShadow = `0 0 ${Math.round(6 + intensity * 14)}px rgba(255,255,255,${(0.18 + intensity * 0.42).toFixed(2)})`;
+                if (vup.lastBoxShadow !== boxShadow) {
+                    vup.bar.style.boxShadow = boxShadow;
+                    vup.lastBoxShadow = boxShadow;
+                }
+                
+                const waveOpacity = +(0.2 + intensity * 0.35).toFixed(2);
+                if (vup.lastWaveOpacity !== waveOpacity) {
+                    vup.wave.style.opacity = waveOpacity;
+                    vup.lastWaveOpacity = waveOpacity;
+                }
+                
+                // 涨粉时激活右移速度
+                vup.waveTargetSpeed = Math.min(220, 20 + absInc * 0.04);
+                
+                const borderColor = `rgba(255,255,255,${(0.14 + intensity * 0.3).toFixed(2)})`;
+                if (vup.lastBorderColor !== borderColor) {
+                    vup.bar.style.borderColor = borderColor;
+                    vup.lastBorderColor = borderColor;
+                }
+                vup.damage.style.opacity = 0;
+                vup.damage.style.animationPlayState = 'paused';
+                
+            } else if (isLosing && visInc > 100) { // 真掉粉时，才激活闪红
+                let intensity = Math.min(1, (visInc - 100) / 3200);
+                const boxShadow = `0 0 ${Math.round(10 + intensity * 28)}px rgba(150,20,35,${(0.35 + intensity * 0.6).toFixed(2)})`;
+                if (vup.lastBoxShadow !== boxShadow) {
+                    vup.bar.style.boxShadow = boxShadow;
+                    vup.lastBoxShadow = boxShadow;
+                }
+                
+                if (vup.lastWaveOpacity !== 0) {
+                    vup.wave.style.opacity = 0;
+                    vup.lastWaveOpacity = 0;
+                }
+                
+                // 掉粉时关闭波浪速度
+                vup.waveTargetSpeed = 0;
+                
+                const borderColor = `rgba(190,35,48,${(0.3 + intensity * 0.45).toFixed(2)})`;
+                if (vup.lastBorderColor !== borderColor) {
+                    vup.bar.style.borderColor = borderColor;
+                    vup.lastBorderColor = borderColor;
+                }
+                vup.damage.style.opacity = 0.35 + intensity * 0.45;
+                vup.damage.style.animationDuration = `${0.42 - intensity * 0.2}s`;
+                vup.damage.style.animationPlayState = 'running';
+                
+            } else { // 震荡区间，统统消失
+                if (vup.lastBoxShadow !== '0 2px 5px rgba(0,0,0,0.4)') {
+                    vup.bar.style.boxShadow = '0 2px 5px rgba(0,0,0,0.4)';
+                    vup.lastBoxShadow = '0 2px 5px rgba(0,0,0,0.4)';
+                }
+                if (vup.lastWaveOpacity !== 0) {
+                    vup.wave.style.opacity = 0;
+                    vup.lastWaveOpacity = 0;
+                }
+                vup.waveTargetSpeed = 0;
+                if (vup.lastBorderColor !== 'rgba(255,255,255,0.05)') {
+                    vup.bar.style.borderColor = 'rgba(255,255,255,0.05)';
+                    vup.lastBorderColor = 'rgba(255,255,255,0.05)';
+                }
+                vup.damage.style.opacity = 0;
+                vup.damage.style.animationPlayState = 'paused';
+            }
+
+            // 【核心修改 4】波浪的向右位移计算 (正向增加 translation)
+            vup.waveSpeed += (vup.waveTargetSpeed - vup.waveSpeed) * waveSpeedLerp;
+            vup.wavePhase = (vup.wavePhase + vup.waveSpeed * (deltaMs / 1000)) % WAVE_TILE;
+            
+            // X 轴整数化渲染缓存，杜绝亚像素拖累
+            const renderX = Math.round(vup.x);
+            const renderY = Math.round(vup.y);
+            const renderW = Math.round(vup.barW);
+            const waveX = Math.round(vup.wavePhase);
+
+            const waveTransform = `translate3d(${waveX}px, 0, 0) skewX(-20deg)`;
+            if (vup.lastWaveTransform !== waveTransform) {
+                vup.wave.style.transform = waveTransform;
+                vup.lastWaveTransform = waveTransform;
+            }
+
+            const nodeTransform = `translate3d(${renderX}px, ${renderY}px, 0)`;
+            if (vup.lastNodeTransform !== nodeTransform) {
+                vup.node.style.transform = nodeTransform;
+                vup.lastNodeTransform = nodeTransform;
+            }
             vup.node.style.opacity = vup.opacity;
-            vup.node.style.zIndex = rank < 150 ? 200 - rank : 0;
-            vup.bar.style.width = `${vup.barW}px`;
+            vup.node.style.zIndex = nzRank < 150 ? 200 - nzRank : 0;
+            
+            if (vup.lastBarW !== renderW) {
+                vup.bar.style.width = `${renderW}px`;
+                vup.lastBarW = renderW;
+            }
 
             let startX = isTopRank ? 145 : 120; 
             let valOffsetX = isTopRank ? 15 : 8;
             let incOffsetX = isTopRank ? 110 : 75;
-            vup.valDiv.style.transform = `translateX(${startX + vup.barW + valOffsetX}px)`;
-            vup.valDiv.textContent = Math.floor(data.value).toLocaleString();
             
-            vup.incDiv.style.transform = `translateX(${startX + vup.barW + incOffsetX}px)`;
-            vup.incDiv.textContent = (data.inc >= 0 ? '▲ ' : '▼ ') + Math.floor(absInc).toLocaleString();
-            vup.incDiv.className = data.inc >= 0 ? 'inc-node text-gradient-up' : 'inc-node text-gradient-down';
+            const valTransform = `translate3d(${startX + renderW + valOffsetX}px, 0, 0)`;
+            if (vup.lastValTransform !== valTransform) {
+                vup.valDiv.style.transform = valTransform;
+                vup.lastValTransform = valTransform;
+            }
+            
+            const valText = Math.floor(data.value).toLocaleString();
+            if (vup.lastValText !== valText) {
+                vup.valDiv.textContent = valText;
+                vup.lastValText = valText;
+            }
+            
+            const incTransform = `translate3d(${startX + renderW + incOffsetX}px, 0, 0)`;
+            if (vup.lastIncTransform !== incTransform) {
+                vup.incDiv.style.transform = incTransform;
+                vup.lastIncTransform = incTransform;
+            }
+            
+            const trendTextUp = data.inc >= 0;
+            const incText = (trendTextUp ? '▲ ' : '▼ ') + Math.floor(absInc).toLocaleString();
+            if (vup.lastIncText !== incText) {
+                vup.incDiv.textContent = incText;
+                vup.lastIncText = incText;
+            }
+            
+            const incClass = trendTextUp ? 'inc-node text-gradient-up' : 'inc-node text-gradient-down';
+            if (vup.lastIncClass !== incClass) {
+                vup.incDiv.className = incClass;
+                vup.lastIncClass = incClass;
+            }
         });
     }
 
@@ -399,7 +580,7 @@
             } else {
                 textSat = 100 + Math.min(200, ((absInc - 300) / 5000) * 200); 
             }
-            incEl.style.filter = `grayscale(${textGray}%) saturate(${textSat}%)`;
+            incEl.style.filter = `grayscale(${Math.round(textGray)}%) saturate(${Math.round(textSat)}%)`;
 
             if (currentTop5Names[idx] !== gainer.name) {
                 currentTop5Names[idx] = gainer.name;

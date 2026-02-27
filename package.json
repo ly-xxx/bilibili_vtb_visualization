@@ -5,7 +5,12 @@
   "main": "crawler.js",
   "scripts": {
     "crawler": "node crawler.js",
-    "serve": "npx http-server"
+    "serve": "npx http-server",
+    "list": "node generate_list.js",
+    "bake": "node bake.js",
+    "merge": "node merge_csv.js",
+    "update:today": "node update_today.js",
+    "fix:color": "node fix_color.js"
   },
   "keywords": [
     "vtuber",
